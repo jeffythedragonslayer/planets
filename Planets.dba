@@ -1,0 +1,163 @@
+REM Project: Planets
+REM Created: 7/15/2007 9:43:47 AM
+REM
+REM ***** Main Source File *****
+REM
+
+#constant Planets = 20
+
+sync on
+sync rate 60
+autocam off
+hide mouse
+color backdrop 0
+randomize timer()
+
+type Planet
+
+  object as dword
+  radius as double float
+  mass as double float
+
+  vx as double float
+  vy as double float
+  vz as double float
+
+endtype
+
+dim Planet() as Planet
+
+local count as dword
+local id as dword
+
+make matrix 1, 300, 300, 30, 30
+position matrix 1, -150, 0, -150
+update matrix 1
+
+for count = 0 to Planets
+  id = makePlanet()
+next count
+
+local dx as double float
+local dy as double float
+local dz as double float
+local total as double float
+local g as double float
+local gravityconstant as double float
+local camang as float
+local camheight as float
+local disexp as double float
+
+gravityconstant = 0.0000001
+disexp = 1
+
+do
+
+  text 0, 0, "Screen Fps: " + str$(screen fps())
+  text 0, 20, "Universal Gravity Constant: " + str$(gravityconstant*10000000, 1) + " * 10^-7"
+  text 0, 30, "(arrowkeys to change)"
+  if upkey() then inc gravityconstant, 0.0000000015
+  if downkey() then dec gravityconstant, 0.0000000015
+  text 0, 40, "Distance Exponent: " + str$(disexp, 2)
+  text 0, 50, "(left and right arrowkeys to change)"
+  if rightkey() then inc disexp, 0.01
+  if leftkey() then dec disexp, 0.01
+  text 0, 70, "Press enter to create more planets"
+  if returnkey() then makePlanet()
+  text 0, 80, "Press delete to erase all the planets"
+  if keystate(211) then deletePlanets()
+  text 0, 90, "Total Planets: " + str$(array count(Planet())+1)
+
+  for Planet1 = 1 to array count(Planet())
+    for Planet2 = 0 to array count(Planet())
+      if Planet1 <> Planet2
+
+        dx = object position x(Planet(Planet2).object) - object position x(Planet(Planet1).object)
+        dy = object position y(Planet(Planet2).object) - object position y(Planet(Planet1).object)
+        dz = object position x(Planet(Planet2).object) - object position z(Planet(Planet1).object)
+        total = sqrt(dx^2 + dy^2 + dz^2)
+
+        dx = dx / total
+        dy = dy / total
+        dz = dz / total
+
+        g = (Planet(Planet1).mass * Planet(Planet2).mass * gravityconstant) / total^disexp
+
+        inc Planet(Planet1).vx, dx*g
+        inc Planet(Planet1).vy, dy*g
+        inc Planet(Planet1).vz, dz*g
+
+      endif
+    next Planet2
+    
+    position object Planet(Planet1).object, object position x(Planet(Planet1).object) + Planet(Planet1).vx, object position y(Planet(Planet1).object) + Planet(Planet1).vy, object position z(Planet(Planet1).object) + Planet(Planet1).vz
+    
+  next Planet1
+  
+  inc camang, -mousemovex()/2.0
+  inc camheight, -mousemovey()/2.0
+  set camera to follow 0, 0, 0, camang, 250, camheight, 1, 0
+  point camera 0, 0, 0
+  
+  sync
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+loop
+
+function makePlanet()
+
+  local id as dword
+
+  add to queue Planet()
+  id = array count(Planet())
+  Planet().radius = rnd(9) + 1
+  if id = 0 then Planet().radius = 20
+  Planet().mass = (4/3) * pi() * Planet().radius ^ 3
+  Planet().object = make_object_sphere(Planet().radius)
+  color object Planet().object, rnd(0x00FFFFFF)
+  if id > 0 then position object Planet(id).object, (rnd(200) - 100), (rnd(200) - 100), (rnd(200) - 100)
+  
+endfunction id
+
+function deletePlanets()
+
+  local totalplanets as integer
+  local id as integer
+
+  totalplanets = array count(Planet())
+  
+  while id <= totalplanets
+    delete object Planet(id).object
+    inc id
+  endwhile
+  
+  empty array Planet()
+  
+endfunction
+
+function make_object_sphere(size as float)
+
+  local id as dword
+
+  id = free_object()
+  make object sphere id, size
+
+endfunction id
+
+function free_object()
+
+  local id as dword = 1
+
+  while object exist(id)
+    inc id
+  endwhile
+
+endfunction id
